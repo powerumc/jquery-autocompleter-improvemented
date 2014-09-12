@@ -693,6 +693,8 @@ $(function () {
 
 	    minLength: 1,
 
+	    delay: 500,
+
         callback: function (value, index, selected) {
             if (selected) {
                 $('.icon').css('background-color', selected.hex);
