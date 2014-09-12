@@ -11,7 +11,7 @@
 
     var guid = 0,
         ignoredKeyCode = [9, 13, 17, 19, 20, 27, 33, 34, 35, 36, 37, 39, 44, 92, 113, 114, 115, 118, 119, 120, 122, 123, 144, 145],
-        allowOptions = ['source', 'empty', 'limit', 'cache', 'focusOpen', 'selectFirst', 'changeWhenSelect', 'highlightMatches', 'ignoredKeyCode', 'customLabel', 'customValue', 'template', 'combine', 'callback'],
+        allowOptions = ['source', 'empty', 'limit', 'cache', 'focusOpen', 'selectFirst', 'changeWhenSelect', 'highlightMatches', 'ignoredKeyCode', 'customLabel', 'customValue', 'template', 'combine', 'callback', 'mimLength'],
         userAgent = (window.navigator.userAgent||window.navigator.vendor||window.opera),
         isFirefox = /Firefox/i.test(userAgent),
         isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(userAgent),
@@ -36,6 +36,7 @@
 	 * @param source [(string|object)] <null> "URL to the server or a local object"
 	 * @param empty [boolean] <true> "Launch if value is empty"
 	 * @param limit [int] <10> "Number of results to be displayed"
+	 * @param minLength [int] <0> "Minimum length of auto completer"
 	 * @param customClass [array] <[]> "Array with custom classes for autocompleter element"
 	 * @param cache [boolean] <true> "Save xhr data to localStorage to avoid the repetition of requests"
 	 * @param focusOpen [boolean] <true> "Launch autocompleter when input gets focus"
@@ -54,6 +55,7 @@
         source: null,
         empty: true,
         limit: 10,
+		minLength: 0,
         customClass: [],
         cache: true,
         focusOpen: true,
@@ -308,7 +310,7 @@
     function _launch(data) {
         data.query = $.trim(data.$node.val());
 
-        if (!data.empty && data.query.length === 0) {
+        if (!data.empty && data.query.length <= data.minLength) {
             _clear(data);
             return;
         } else {
