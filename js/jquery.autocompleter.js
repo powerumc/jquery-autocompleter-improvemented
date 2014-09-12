@@ -11,12 +11,13 @@
 
     var guid = 0,
         ignoredKeyCode = [9, 13, 17, 19, 20, 27, 33, 34, 35, 36, 37, 39, 44, 92, 113, 114, 115, 118, 119, 120, 122, 123, 144, 145],
-        allowOptions = ['source', 'empty', 'limit', 'cache', 'focusOpen', 'selectFirst', 'changeWhenSelect', 'highlightMatches', 'ignoredKeyCode', 'customLabel', 'customValue', 'template', 'combine', 'callback'],
+        allowOptions = ['source', 'empty', 'limit', 'cache', 'focusOpen', 'selectFirst', 'changeWhenSelect', 'highlightMatches', 'ignoredKeyCode', 'customLabel', 'customValue', 'template', 'combine', 'callback', 'delay', 'delayCallback'],
         userAgent = (window.navigator.userAgent||window.navigator.vendor||window.opera),
         isFirefox = /Firefox/i.test(userAgent),
         isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(userAgent),
         isFirefoxMobile = (isFirefox && isMobile),
         $body = null,
+		timer = null,
         localStorageKey = 'autocompleterCache',
         supportLocalStorage = (function () {
             var supported = typeof window.localStorage !== 'undefined';
@@ -299,65 +300,79 @@
         return response;
     }
 
-    /**
-     * @method private
-     * @name _launch
-     * @description Use source locally or create xhr
-     * @param data [object] "Instance data"
-     */
+
+	/**
+	 * @method private
+	 * @name _launch
+	 * @description Use source locally or create xhr
+	 * @param data [object] "Instance data"
+	 */
     function _launch(data) {
-        data.query = $.trim(data.$node.val());
+		clearTimeout(timer);
 
-        if (!data.empty && data.query.length === 0) {
-            _clear(data);
-            return;
-        } else {
-            if (typeof data.source === 'object') {
-                _clear(data);
+		data.query = $.trim(data.$node.val());
 
-                // Local search
-                var search = _search(data.query, _clone(data.source), data.limit);
-                if (search.length) {
-                    _response(search, data);
-                }
-            } else {
-                if (data.jqxhr) {
-                    data.jqxhr.abort();
-                }
+		if (!data.empty && data.query.length === 0) {
+			_clear(data);
+			return;
+		}
 
-                var ajaxData = $.extend({
-                    limit: data.limit,
-                    query: data.query
-                }, data.combine());
-
-                data.jqxhr = $.ajax({
-                    url:        data.source,
-                    dataType:   "json",
-                    data:       ajaxData,
-                    beforeSend: function (xhr) {
-                        data.$autocompleter.addClass('autocompleter-ajax');
-                        _clear(data);
-                        if (data.cache) {
-                            var stored = _getCache(this.url);
-                            if (stored) {
-                                xhr.abort();
-                                _response(stored, data);
-                            }
-                        }
-                    }
-                })
-                .done(function (response) {
-                    if (data.cache) {
-                        _setCache(this.url, response);
-                    }
-                    _response(response, data);
-                })
-                .always(function () {
-                    data.$autocompleter.removeClass('autocompleter-ajax');
-                });
-            }
-        }
+		timer = setTimeout(function() { _launchCallback(data); }, data.delay);
     }
+
+	/**
+	 * @method private
+	 * @name _launchCallback
+	 * @description Use source locally or create xhr
+	 * @param data [object] "Instance data"
+	 */
+	function _launchCallback(data) {
+		if (typeof data.source === 'object') {
+			_clear(data);
+
+			// Local search
+			var search = _search(data.query, _clone(data.source), data.limit);
+			if (search.length) {
+				_response(search, data);
+			}
+		} else {
+			if (data.jqxhr) {
+				data.jqxhr.abort();
+			}
+
+			var ajaxData = $.extend({
+				limit: data.limit,
+				query: data.query
+			}, data.combine());
+
+			data.jqxhr = $.ajax({
+				url:        data.source,
+				dataType:   "json",
+				data:       ajaxData,
+				crossDomain:true,
+				beforeSend: function (xhr) {
+					data.$autocompleter.addClass('autocompleter-ajax');
+					_clear(data);
+					if (data.cache) {
+						var stored = _getCache(this.url);
+						if (stored) {
+							xhr.abort();
+							_response(stored, data);
+						}
+					}
+				}
+			})
+			.done(function (response) {
+				if (data.cache) {
+					_setCache(this.url, response);
+				}
+				_response(response, data);
+			})
+			.always(function () {
+				data.$autocompleter.removeClass('autocompleter-ajax');
+			});
+		}
+	}
 
     /**
      * @method private
