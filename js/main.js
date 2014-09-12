@@ -23,6 +23,8 @@ $(function () {
         // max results
         limit: 5,
 
+	    delay: 1000,
+
         callback: function (value, index, selected) {
             if (selected) {
                 $('.icon').css('background-color', selected.hex);
