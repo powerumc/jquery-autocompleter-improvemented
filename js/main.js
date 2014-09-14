@@ -685,6 +685,9 @@ $(function () {
         // show hint
         hint: true,
 
+	delay: 500,
+	minLength: 2,
+
         // abort source if empty field
         empty: false,
 
